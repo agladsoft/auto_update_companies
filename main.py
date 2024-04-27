@@ -29,7 +29,7 @@ class UpdatingCompanies:
                 "SELECT * "
                 "FROM reference_compass "
                 "ORDER BY last_updated, original_file_parsed_on "
-                "LIMIT 100"
+                "LIMIT 1"
             )
             # Чтобы проверить, есть ли данные. Так как переменная образуется, но внутри нее могут быть ошибки.
             print(ref_compass.result_rows[0])
@@ -144,12 +144,9 @@ class UpdatingCompanies:
             response: requests.Response = requests.post(f"http://{get_my_env_var('SERVICE_INN')}:8003", json=dict_data)
             response.raise_for_status()
             self.get_data_from_dadata(response.json(), dict_data, index)
-            dict_data["dadata_branch_name"] = None \
-                if not dict_data["dadata_branch_name"] else dict_data["dadata_branch_name"]
-            dict_data["dadata_branch_address"] = None \
-                if not dict_data["dadata_branch_address"] else dict_data["dadata_branch_address"]
-            dict_data["dadata_branch_region"] = None \
-                if not dict_data["dadata_branch_region"] else dict_data["dadata_branch_region"]
+            dict_data["dadata_branch_name"] = dict_data["dadata_branch_name"] or None
+            dict_data["dadata_branch_address"] = dict_data["dadata_branch_address"] or None
+            dict_data["dadata_branch_region"] = dict_data["dadata_branch_region"] or None
         except requests.exceptions.RequestException as e:
             logger.error(f"An error occurred during the API request: {str(e)}")
 
@@ -157,7 +154,7 @@ class UpdatingCompanies:
         list_inn = self.connect_to_db()
         for i, dict_data in enumerate(list_inn):
             self.get_data_from_service_inn(dict_data, i)
-        self.write_to_json(list_inn)
+            self.write_to_json(dict_data)
 
 
 if __name__ == "__main__":
