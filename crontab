@@ -1,0 +1,5 @@
+# START CRON JOB
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+* * * * * /usr/local/bin/python3 ${XL_IDP_PATH_DOCKER}/main.py > /proc/1/fd/1 2>/proc/1/fd/2
+# END CRON JOB
