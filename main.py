@@ -28,7 +28,7 @@ class UpdatingCompanies:
             ref_compass: QueryResult = client.query(
                 "SELECT * "
                 "FROM reference_compass "
-                "ORDER BY last_updated, original_file_parsed_on "
+                "ORDER BY last_updated NULLS FIRST, original_file_name "
                 "LIMIT 100"
             )
             # Чтобы проверить, есть ли данные. Так как переменная образуется, но внутри нее могут быть ошибки.
