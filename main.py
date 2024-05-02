@@ -28,7 +28,8 @@ class UpdatingCompanies:
             ref_compass: QueryResult = client.query(
                 "SELECT * "
                 "FROM reference_compass "
-                "WHERE is_company_name_from_cache is NULL"
+                "ORDER BY last_updated NULLS FIRST, original_file_name "
+                "LIMIT 10000"
             )
             # Чтобы проверить, есть ли данные. Так как переменная образуется, но внутри нее могут быть ошибки.
             print(ref_compass.result_rows[0])
