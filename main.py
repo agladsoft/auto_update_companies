@@ -124,13 +124,10 @@ class UpdatingCompanies:
                 company_address: dict = company_data.get("address") or {}
                 company_address_data: dict = company_address.get("data", {})
                 company_data_branch: dict = company_data.get("branch_type")
-                if company_data_branch == "MAIN" and not dict_data.get("dadata_status"):
+                if company_data_branch == "MAIN":
                     self.get_status(dict_data, company_data)
-                elif company_data.get("type") == 'INDIVIDUAL' and not dict_data.get("dadata_status"):
-                    self.get_status(dict_data, company_data)
-                if company_data and company_data["state"]["status"] != "LIQUIDATED":
-                    self.add_dadata_columns(company_data, company_address, company_address_data, company_data_branch,
-                                            company, dict_data, dadata_request[1])
+                self.add_dadata_columns(company_data, company_address, company_address_data, company_data_branch,
+                                        company, dict_data, dadata_request[1])
             except Exception as ex_parse:
                 logger.error(f"Error code: error processing in row {index + 1}! "
                              f"Error is {ex_parse} Data is {dict_data}")
