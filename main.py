@@ -28,8 +28,7 @@ class UpdatingCompanies:
             ref_compass: QueryResult = client.query(
                 "SELECT * "
                 "FROM reference_compass "
-                "ORDER BY last_updated NULLS FIRST, original_file_name "
-                "LIMIT 600"
+                "WHERE is_company_name_from_cache = true"
             )
             # Чтобы проверить, есть ли данные. Так как переменная образуется, но внутри нее могут быть ошибки.
             print(ref_compass.result_rows[0])
@@ -44,7 +43,7 @@ class UpdatingCompanies:
                     "dadata_branch_address": '',
                     "dadata_branch_region": '',
                     "last_updated": start_time,
-                    "is_cache": False
+                    "from_cache": False
                  } for row in ref_compass.result_rows
             ]
         except Exception as ex_connect:
