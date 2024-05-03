@@ -33,7 +33,7 @@ class UpdatingCompanies:
             # Чтобы проверить, есть ли данные. Так как переменная образуется, но внутри нее могут быть ошибки.
             print(ref_compass.result_rows[0])
             logger.info("Connected to db")
-            start_time: str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            start_time: str = str(datetime.now())
             return [
                 {
                     "uuid": str(row[0]),
