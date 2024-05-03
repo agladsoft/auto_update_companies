@@ -50,7 +50,7 @@ class UpdatingCompanies:
             sys.exit(1)
 
     @staticmethod
-    def write_to_json(parsed_data: list, index: int) -> None:
+    def write_to_json(parsed_data: list) -> None:
         """
         Write data to json.
         """
@@ -58,7 +58,7 @@ class UpdatingCompanies:
         name = "update"
         dir_name = f"{os.environ.get('XL_IDP_PATH_REFERENCE')}/reference_compass/{name}"
         os.makedirs(dir_name, exist_ok=True)
-        output_file_path: str = os.path.join(dir_name, f'{name}_{index}.json')
+        output_file_path: str = os.path.join(dir_name, f'{name}.json')
         with open(f"{output_file_path}", 'w', encoding='utf-8') as f:
             json.dump(parsed_data, f, ensure_ascii=False, indent=4)
 
@@ -149,7 +149,7 @@ class UpdatingCompanies:
         list_inn = self.connect_to_db()
         for i, dict_data in enumerate(list_inn):
             self.get_data_from_service_inn(dict_data, i)
-            self.write_to_json(dict_data, i)
+        self.write_to_json(list_inn)
 
 
 if __name__ == "__main__":
