@@ -28,11 +28,13 @@ class UpdatingCompanies:
             ref_compass: QueryResult = client.query(
                 "SELECT * "
                 "FROM reference_compass "
+                "ORDER BY last_updated NULLS FIRST, original_file_name "
+                "LIMIT 10000"
             )
             # Чтобы проверить, есть ли данные. Так как переменная образуется, но внутри нее могут быть ошибки.
             print(ref_compass.result_rows[0])
             logger.info("Connected to db")
-            start_time: str = str(datetime.now())
+            start_time: str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             return [
                 {
                     "uuid": str(row[0]),
@@ -42,7 +44,7 @@ class UpdatingCompanies:
                     "dadata_branch_address": '',
                     "dadata_branch_region": '',
                     "last_updated": start_time,
-                    "from_cache": True
+                    "from_cache": False
                  } for row in ref_compass.result_rows
             ]
         except Exception as ex_connect:
@@ -50,7 +52,7 @@ class UpdatingCompanies:
             sys.exit(1)
 
     @staticmethod
-    def write_to_json(parsed_data: list) -> None:
+    def write_to_json(parsed_data: list, index: int) -> None:
         """
         Write data to json.
         """
@@ -58,7 +60,7 @@ class UpdatingCompanies:
         name = "update"
         dir_name = f"{os.environ.get('XL_IDP_PATH_REFERENCE')}/reference_compass/{name}"
         os.makedirs(dir_name, exist_ok=True)
-        output_file_path: str = os.path.join(dir_name, f'{name}.json')
+        output_file_path: str = os.path.join(dir_name, f'{name}_{index}.json')
         with open(f"{output_file_path}", 'w', encoding='utf-8') as f:
             json.dump(parsed_data, f, ensure_ascii=False, indent=4)
 
@@ -149,7 +151,7 @@ class UpdatingCompanies:
         list_inn = self.connect_to_db()
         for i, dict_data in enumerate(list_inn):
             self.get_data_from_service_inn(dict_data, i)
-        self.write_to_json(list_inn)
+            self.write_to_json(dict_data, i)
 
 
 if __name__ == "__main__":
