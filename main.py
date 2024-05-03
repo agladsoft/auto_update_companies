@@ -28,6 +28,7 @@ class UpdatingCompanies:
             ref_compass: QueryResult = client.query(
                 "SELECT * "
                 "FROM reference_compass "
+                "LIMIT 100 "
             )
             # Чтобы проверить, есть ли данные. Так как переменная образуется, но внутри нее могут быть ошибки.
             print(ref_compass.result_rows[0])
