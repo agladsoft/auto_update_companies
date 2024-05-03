@@ -19,4 +19,4 @@ COPY crontab /etc/cron.d/crontab
 RUN chmod 0644 /etc/cron.d/crontab
 RUN crontab /etc/cron.d/crontab
 
-CMD ["/bin/sh", "-c", "printenv > /etc/environment && cron -f"]
+CMD python3 ${XL_IDP_PATH_DOCKER}/main.py
