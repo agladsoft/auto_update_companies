@@ -29,7 +29,7 @@ class UpdatingCompanies:
                 "SELECT * "
                 "FROM reference_compass "
                 "ORDER BY last_updated NULLS FIRST, original_file_name "
-                "LIMIT 10000"
+                "LIMIT 19000"
             )
             # Чтобы проверить, есть ли данные. Так как переменная образуется, но внутри нее могут быть ошибки.
             print(ref_compass.result_rows[0])
