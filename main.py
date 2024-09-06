@@ -10,20 +10,20 @@ from clickhouse_connect.driver.query import QueryResult
 
 load_dotenv()
 logger = get_logger(os.path.basename(__file__).replace(".py", "_") + str(datetime.now().date()))
-NOT_COUNT_COMPANIES: list = [
-    "6162015019",
-    "2209006093",
-    "5752002910",
-    "3122000300",
-    "2201000766",
-    "7710002750",
-    "7113502396",
-    "3122503751",
-    "6167055777",
-    "6443007550",
-    "7743084941",
-    "3811185573"
-]
+# NOT_COUNT_COMPANIES: list = [
+#     "6162015019",
+#     "2209006093",
+#     "5752002910",
+#     "3122000300",
+#     "2201000766",
+#     "7710002750",
+#     "7113502396",
+#     "3122503751",
+#     "6167055777",
+#     "6443007550",
+#     "7743084941",
+#     "3811185573"
+# ]
 
 
 class UpdatingCompanies:
@@ -164,9 +164,9 @@ class UpdatingCompanies:
     def main(self):
         list_inn = self.connect_to_db()
         for i, dict_data in enumerate(list_inn):
-            if dict_data["inn"] not in NOT_COUNT_COMPANIES:
-                self.get_data_from_service_inn(dict_data, i)
-                self.write_to_json(dict_data, i)
+            # if dict_data["inn"] not in NOT_COUNT_COMPANIES:
+            self.get_data_from_service_inn(dict_data, i)
+            self.write_to_json(dict_data, i)
 
 
 if __name__ == "__main__":
