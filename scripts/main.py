@@ -1,7 +1,7 @@
 import json
 import requests
-from __init__ import *
 from datetime import datetime
+from scripts.__init__ import *
 from dotenv import load_dotenv
 from clickhouse_connect import get_client
 from clickhouse_connect.driver import Client
@@ -9,7 +9,7 @@ from clickhouse_connect.driver.query import QueryResult
 
 
 load_dotenv()
-logger = get_logger(os.path.basename(__file__).replace(".py", "_") + str(datetime.now().date()))
+logger = get_logger(str(os.path.basename(__file__).replace(".py", "_") + str(datetime.now().date())))
 # NOT_COUNT_COMPANIES: list = [
 #     "6162015019",
 #     "2209006093",
@@ -79,29 +79,35 @@ class UpdatingCompanies:
             json.dump(parsed_data, f, ensure_ascii=False, indent=4)
 
     @staticmethod
-    def add_dadata_columns(company_data: dict, company_address: dict, company_address_data: dict,
-                           company_data_branch: dict, company: dict, dict_data: dict,
-                           is_company_name_from_cache: bool) -> None:
+    def add_dadata_columns(
+        company_data: dict,
+        company_address: dict,
+        company_address_data: dict,
+        company_data_branch: str,
+        company: dict,
+        dict_data: dict,
+        is_company_name_from_cache: bool
+    ) -> None:
         """
         Add values from dadata to the dictionary.
         """
         dict_data["dadata_company_name"] = \
-            f'{company_data.get("opf").get("short", "") if company_data.get("opf") else ""} ' \
-            f'{company_data["name"]["full"]}'.strip() \
-            if company_data_branch == "MAIN" or not company_data_branch else dict_data["dadata_company_name"]
+            f'{company_data.get("opf", {}).get("short", "") if company_data.get("opf") else ""} ' \
+            f'{company_data.get("name", {}).get("full", "")}'.strip() \
+            if company_data_branch == "MAIN" or not company_data_branch else dict_data.get("dadata_company_name")
         dict_data["dadata_okpo"] = company_data.get("okpo") \
-            if company_data_branch == "MAIN" or not company_data_branch else dict_data["dadata_okpo"]
+            if company_data_branch == "MAIN" or not company_data_branch else dict_data.get("dadata_okpo")
         dict_data["dadata_address"] = company_address.get("unrestricted_value") \
-            if company_data_branch == "MAIN" or not company_data_branch else dict_data["dadata_address"]
+            if company_data_branch == "MAIN" or not company_data_branch else dict_data.get("dadata_address")
         dict_data["dadata_region"] = company_address_data.get("region_with_type") \
-            if company_data_branch == "MAIN" or not company_data_branch else dict_data["dadata_region"]
+            if company_data_branch == "MAIN" or not company_data_branch else dict_data.get("dadata_region")
         dict_data["dadata_federal_district"] = company_address_data.get("federal_district") \
-            if company_data_branch == "MAIN" or not company_data_branch else dict_data["dadata_federal_district"]
+            if company_data_branch == "MAIN" or not company_data_branch else dict_data.get("dadata_federal_district")
         dict_data["dadata_city"] = company_address_data.get("city") \
-            if company_data_branch == "MAIN" or not company_data_branch else dict_data["dadata_city"]
+            if company_data_branch == "MAIN" or not company_data_branch else dict_data.get("dadata_city")
         dict_data["dadata_okved_activity_main_type"] = company_data.get("okved") \
             if company_data_branch == "MAIN" or not company_data_branch \
-            else dict_data["dadata_okved_activity_main_type"]
+            else dict_data.get("dadata_okved_activity_main_type")
         dict_data["dadata_branch_name"] += f'{company.get("value")}, КПП {company_data.get("kpp", "")}' + '\n' \
             if company_data_branch == "BRANCH" else ''
         dict_data["dadata_branch_address"] += company_address["unrestricted_value"] + '\n' \
@@ -109,23 +115,23 @@ class UpdatingCompanies:
         dict_data["dadata_branch_region"] += company_address_data["region_with_type"] + '\n' \
             if company_data_branch == "BRANCH" else ''
         dict_data["dadata_geo_lat"] = company_address_data.get("geo_lat") \
-            if company_data_branch == "MAIN" or not company_data_branch else dict_data["dadata_geo_lat"]
+            if company_data_branch == "MAIN" or not company_data_branch else dict_data.get("dadata_geo_lat")
         dict_data["dadata_geo_lon"] = company_address_data.get("geo_lon") \
-            if company_data_branch == "MAIN" or not company_data_branch else dict_data["dadata_geo_lat"]
+            if company_data_branch == "MAIN" or not company_data_branch else dict_data.get("dadata_geo_lat")
         dict_data["is_company_name_from_cache"] = is_company_name_from_cache
 
     @staticmethod
-    def get_status(dict_data: dict, company_data: dict):
+    def get_status(dict_data: dict, company_data: dict) -> None:
         """
         Get the status of the company.
         """
         dict_data["dadata_status"] = company_data["state"]["status"]
         dict_data["dadata_registration_date"] = \
-            datetime.utcfromtimestamp(
+            datetime.fromtimestamp(
                 company_data["state"]["registration_date"] // 1000
             ).strftime('%Y-%m-%d') if company_data["state"]["registration_date"] else None
         dict_data["dadata_liquidation_date"] = \
-            datetime.utcfromtimestamp(
+            datetime.fromtimestamp(
                 company_data["state"]["liquidation_date"] // 1000
             ).strftime('%Y-%m-%d') if company_data["state"]["liquidation_date"] else None
 
@@ -138,14 +144,18 @@ class UpdatingCompanies:
                 company_data: dict = company.get("data")
                 company_address: dict = company_data.get("address") or {}
                 company_address_data: dict = company_address.get("data", {})
-                company_data_branch: dict = company_data.get("branch_type")
+                company_data_branch: str = company_data.get("branch_type")
                 if company_data_branch == "MAIN":
                     self.get_status(dict_data, company_data)
-                self.add_dadata_columns(company_data, company_address, company_address_data, company_data_branch,
-                                        company, dict_data, dadata_request[1])
+                self.add_dadata_columns(
+                    company_data, company_address, company_address_data, company_data_branch,
+                    company, dict_data, dadata_request[1]
+                )
             except Exception as ex_parse:
-                logger.error(f"Error code: error processing in row {index + 1}! "
-                             f"Error is {ex_parse} Data is {dict_data}")
+                logger.error(
+                    f"Error code: error processing in row {index + 1}! "
+                    f"Error is {ex_parse} Data is {dict_data}"
+                )
 
     def get_data_from_service_inn(self, dict_data: dict, index: int) -> None:
         """
