@@ -33,7 +33,20 @@ class UpdatingCompanies:
     @staticmethod
     def connect_to_db() -> list:
         """
-        Connecting to clickhouse.
+        Connect to the database and retrieve data from the `reference_compass` table.
+    
+        This method establishes a connection to the database using environment variables for 
+        host, database, username, and password. It queries the `reference_compass` table, 
+        ordering the results by `last_updated` and `original_file_name`, and limits the results 
+        to 19,000 rows. Each row of the query result is transformed into a dictionary 
+        with keys corresponding to specific columns and additional metadata.
+    
+        :return: A list of dictionaries, each representing a row from the query result 
+                  with fields for 'uuid', 'inn', 'dadata_status', 'dadata_branch_name', 
+                  'dadata_branch_address', 'dadata_branch_region', 'last_updated', 
+                  and 'from_cache'.
+        :raises: If there is an error connecting to the database, logs the error and 
+                 exits the program with a status of 1.
         """
         try:
             logger.info("Will connect to db")
@@ -68,7 +81,12 @@ class UpdatingCompanies:
     @staticmethod
     def write_to_json(parsed_data: list, index: int) -> None:
         """
-        Write data to json.
+        Writes the given parsed data to a JSON file.
+
+        :param parsed_data: A list of dictionaries, where each dictionary represents a company
+        :param index: The index of the file to write. The file name will be in the format
+                      '{name}_{index}.json'
+        :return: None
         """
         logger.info("Write data to json")
         name = "update"
@@ -89,35 +107,48 @@ class UpdatingCompanies:
         is_company_name_from_cache: bool
     ) -> None:
         """
-        Add values from dadata to the dictionary.
+        Add columns to the given dictionary with data from DaData.
+
+        This method takes a dictionary of company data and adds columns based on the given branch type.
+        If the branch type is MAIN, it adds columns for company name, OKPO, address, region, federal district,
+        city, OKVED activity main type, geo latitude, and geo longitude. If the branch type is BRANCH,
+        it adds columns for branch name with KPP, branch address, and branch region.
+
+        :param company_data: A dictionary of company data
+        :param company_address: A dictionary of company address
+        :param company_address_data: A dictionary of company address data
+        :param company_data_branch: The branch type
+        :param company: A dictionary of company data
+        :param dict_data: The dictionary to which columns should be added
+        :param is_company_name_from_cache: Whether the company name is from cache
+        :return: None
         """
-        dict_data["dadata_company_name"] = \
-            f'{company_data.get("opf", {}).get("short", "") if company_data.get("opf") else ""} ' \
-            f'{company_data.get("name", {}).get("full", "")}'.strip() \
-            if company_data_branch == "MAIN" or not company_data_branch else dict_data.get("dadata_company_name")
-        dict_data["dadata_okpo"] = company_data.get("okpo") \
-            if company_data_branch == "MAIN" or not company_data_branch else dict_data.get("dadata_okpo")
-        dict_data["dadata_address"] = company_address.get("unrestricted_value") \
-            if company_data_branch == "MAIN" or not company_data_branch else dict_data.get("dadata_address")
-        dict_data["dadata_region"] = company_address_data.get("region_with_type") \
-            if company_data_branch == "MAIN" or not company_data_branch else dict_data.get("dadata_region")
-        dict_data["dadata_federal_district"] = company_address_data.get("federal_district") \
-            if company_data_branch == "MAIN" or not company_data_branch else dict_data.get("dadata_federal_district")
-        dict_data["dadata_city"] = company_address_data.get("city") \
-            if company_data_branch == "MAIN" or not company_data_branch else dict_data.get("dadata_city")
-        dict_data["dadata_okved_activity_main_type"] = company_data.get("okved") \
-            if company_data_branch == "MAIN" or not company_data_branch \
-            else dict_data.get("dadata_okved_activity_main_type")
-        dict_data["dadata_branch_name"] += f'{company.get("value")}, КПП {company_data.get("kpp", "")}' + '\n' \
-            if company_data_branch == "BRANCH" else ''
-        dict_data["dadata_branch_address"] += company_address["unrestricted_value"] + '\n' \
-            if company_data_branch == "BRANCH" else ''
-        dict_data["dadata_branch_region"] += company_address_data["region_with_type"] + '\n' \
-            if company_data_branch == "BRANCH" else ''
-        dict_data["dadata_geo_lat"] = company_address_data.get("geo_lat") \
-            if company_data_branch == "MAIN" or not company_data_branch else dict_data.get("dadata_geo_lat")
-        dict_data["dadata_geo_lon"] = company_address_data.get("geo_lon") \
-            if company_data_branch == "MAIN" or not company_data_branch else dict_data.get("dadata_geo_lat")
+        is_main: bool = company_data_branch == "MAIN" or not company_data_branch
+        is_branch: bool = company_data_branch == "BRANCH"
+
+        dict_data.update({
+            "dadata_company_name": (
+                f'{company_data.get("opf", {}).get("short", "")} '
+                f'{company_data.get("name", {}).get("full", "")}'.strip()
+            ) if is_main else dict_data.get("dadata_company_name"),
+            "dadata_okpo": company_data.get("okpo") if is_main else dict_data.get("dadata_okpo"),
+            "dadata_address": company_address.get("unrestricted_value") if is_main else dict_data.get("dadata_address"),
+            "dadata_region": company_address_data.get("region_with_type") if is_main else dict_data.get("dadata_region"),
+            "dadata_federal_district": company_address_data.get("federal_district")
+                if is_main else dict_data.get("dadata_federal_district"),
+            "dadata_city": company_address_data.get("city") if is_main else dict_data.get("dadata_city"),
+            "dadata_okved_activity_main_type": company_data.get("okved")
+                if is_main else dict_data.get("dadata_okved_activity_main_type"),
+            "dadata_geo_lat": company_address_data.get("geo_lat") if is_main else dict_data.get("dadata_geo_lat"),
+            "dadata_geo_lon": company_address_data.get("geo_lon") if is_main else dict_data.get("dadata_geo_lon"),
+        })
+
+        dict_data.update({
+            "dadata_branch_name": f'{company.get("value", "")}, КПП {company_data.get("kpp", "")}\n' if is_branch else '',
+            "dadata_branch_address": f'{company_address.get("unrestricted_value", "")}\n' if is_branch else '',
+            "dadata_branch_region": f'{company_address_data.get("region_with_type", "")}\n' if is_branch else '',
+        })
+
         dict_data["is_company_name_from_cache"] = is_company_name_from_cache
 
     @staticmethod

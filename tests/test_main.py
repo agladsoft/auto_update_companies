@@ -72,6 +72,8 @@ def test_get_status(updater, company_data, expected_status, expected_registratio
 
 @pytest.mark.parametrize("response_data", [
     ([{
+        "value": "OOO Test Company",
+        "unrestricted_value": "OOO Test Company",
         "data": {
             "name": {"full": "Test Company"},
             "branch_type": "MAIN",
@@ -91,6 +93,7 @@ def test_get_status(updater, company_data, expected_status, expected_registratio
                 }
             },
             "opf": {"short": "OOO"},
+            "kpp": "562301001",
             "okpo": "1234567890",
             "okved": "12345"
         }
@@ -232,3 +235,81 @@ def test_add_dadata_columns(
     assert dict_data == expected_dict_data
 
 
+@pytest.mark.parametrize(
+    "dadata_request, index, expected_dict_data",
+    [
+        # Happy path: MAIN branch with all data
+        (
+            [[
+                {
+                    "value": "OOO Main Company",
+                    "unrestricted_value": "OOO Main Company",
+                    "data": {
+                        "opf": {"short": "OOO"},
+                        "name": {"full": "Main Company"},
+                        "kpp": "562301001",
+                        "okpo": "1234567890",
+                        "okved": "12345",
+                        "state": {"status": "ACTIVE", "registration_date": 1678886400000, "liquidation_date": None},
+                        "address": {
+                            "unrestricted_value": "Main address",
+                            "data": {
+                                "region_with_type": "Main region",
+                                "federal_district": "Main district",
+                                "city": "Main city",
+                                "geo_lat": 12.34,
+                                "geo_lon": 56.78
+                            }
+                        },
+                        "branch_type": "MAIN"
+                    }
+                },
+                {
+                    "value": "OOO Branch Company",
+                    "unrestricted_value": "OOO Branch Company",
+                    "data": {
+                        "opf": {"short": "OOO"},
+                        "name": {"full": "Branch Name"},
+                        "kpp": "562301001",
+                        "okpo": "1234567890",
+                        "okved": "12345",
+                        "state": {"status": "ACTIVE", "registration_date": 1678886400000, "liquidation_date": None},
+                        "address": {
+                            "unrestricted_value": "Branch address",
+                            "data": {
+                                "region_with_type": "Branch region",
+                                "federal_district": "Branch district",
+                                "city": "Branch city",
+                                "geo_lat": 12.34,
+                                "geo_lon": 56.78
+                            }
+                        },
+                        "branch_type": "BRANCH"
+                    }
+                }
+            ], False],
+            0,
+            {
+                "dadata_company_name": "OOO Main Company", "dadata_okpo": "1234567890", "dadata_address": "Main address",
+                "dadata_region": "Main region", "dadata_federal_district": "Main district", "dadata_city": "Main city",
+                "dadata_okved_activity_main_type": "12345", "dadata_geo_lat": 12.34, "dadata_geo_lon": 56.78,
+                "dadata_status": "ACTIVE", "dadata_registration_date": "2023-03-15", "dadata_liquidation_date": None,
+                "is_company_name_from_cache": False,
+                "dadata_branch_name": "OOO Branch Company, КПП 562301001\n",
+                "dadata_branch_address": "Branch address\n",
+                "dadata_branch_region": "Branch region\n"
+            }
+        )
+    ],
+    ids=["main_branch_all_data"]
+)
+def test_get_data_from_dadata(dadata_request, index, expected_dict_data):
+    # Arrange
+    updater = UpdatingCompanies()
+    dict_data = {}
+
+    # Act
+    updater.get_data_from_dadata(dadata_request, dict_data, index)
+
+    # Assert
+    assert dict_data == expected_dict_data
