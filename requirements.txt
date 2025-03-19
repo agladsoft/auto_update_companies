@@ -1,4 +1,4 @@
-clickhouse-connect==0.5.14
+clickhouse_connect==0.6.13
 python-dotenv==1.0.0
 requests==2.31.0
 numpy==1.24.4
