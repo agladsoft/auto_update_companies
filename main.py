@@ -42,8 +42,8 @@ class UpdatingCompanies:
             ref_compass: QueryResult = client.query(
                 "SELECT * "
                 "FROM reference_compass "
-                "ORDER BY last_updated NULLS FIRST, original_file_name "
-                "LIMIT 19000"
+                "WHERE dadata_geo_lat = dadata_geo_lon "
+                "ORDER BY last_updated DESC"
             )
             # Чтобы проверить, есть ли данные. Так как переменная образуется, но внутри нее могут быть ошибки.
             print(ref_compass.result_rows[0])
@@ -111,7 +111,7 @@ class UpdatingCompanies:
         dict_data["dadata_geo_lat"] = company_address_data.get("geo_lat") \
             if company_data_branch == "MAIN" or not company_data_branch else dict_data["dadata_geo_lat"]
         dict_data["dadata_geo_lon"] = company_address_data.get("geo_lon") \
-            if company_data_branch == "MAIN" or not company_data_branch else dict_data["dadata_geo_lat"]
+            if company_data_branch == "MAIN" or not company_data_branch else dict_data["dadata_geo_lon"]
         dict_data["is_company_name_from_cache"] = is_company_name_from_cache
 
     @staticmethod
